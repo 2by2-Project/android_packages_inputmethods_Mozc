@@ -1,0 +1,96 @@
+
+package {
+    default_applicable_licenses: ["packages_inputmethods_Mozc_native_license"],
+    default_visibility: ["//packages/inputmethods/Mozc:__subpackages__"],
+}
+
+license {
+    name: "packages_inputmethods_Mozc_native_license",
+    visibility: [":__subpackages__"],
+    license_kinds: ["SPDX-license-identifier-BSD-3-Clause"],
+    license_text: ["LICENSE"],
+}
+
+cc_defaults {
+    name: "mozc_defaults",
+    // Bazel propagates `defines` of every cc_library to its dependents; the
+    // converter collects them into mozc_generated_defines.
+    defaults: ["mozc_generated_defines"],
+    host_supported: true,
+    sdk_version: "29",
+    stl: "libc++_static",
+    cpp_std: "c++20",
+    local_include_dirs: ["."],
+    export_include_dirs: ["."],
+    cflags: [
+        "-DNDEBUG",
+        "-DABSL_MIN_LOG_LEVEL=100",
+        "-funsigned-char",
+        "-Wno-sign-compare",
+        "-Wno-char-subscripts",
+        "-Wno-unused-parameter",
+        "-Wno-error",
+    ],
+    target: {
+        android: {
+            cflags: ["-DOS_ANDROID"],
+            header_libs: ["jni_headers"],
+        },
+        host: {
+            // Share libc++ with the host libprotobuf-cpp-full.so; two copies of
+            // libc++ break iostreams (std::bad_cast).
+            stl: "libc++",
+        },
+    },
+}
+
+cc_defaults {
+    name: "mozc_proto_defaults",
+    defaults: ["mozc_defaults"],
+    proto: {
+        type: "full",
+        canonical_path_from_root: false,
+        export_proto_headers: true,
+    },
+}
+
+cc_defaults {
+    name: "mozc_host_binary_defaults",
+    defaults: ["mozc_defaults"],
+    host_supported: true,
+    device_supported: false,
+}
+
+cc_defaults {
+    name: "mozc_jni_defaults",
+    defaults: ["mozc_defaults"],
+    host_supported: false,
+    ldflags: [
+        "-Wl,--gc-sections",
+        "-Wl,-z,max-page-size=16384",
+    ],
+    version_script: "android/jni/libmozc.map",
+}
+
+// Replacement for @com_google_absl//absl/log:flags (see shims/).
+cc_library_static {
+    name: "mozc_shim_absl_log_flags",
+    defaults: ["mozc_defaults"],
+    srcs: ["shims/absl_log_flags.cc"],
+    export_include_dirs: ["shims"],
+    static_libs: ["absl_flags_flag"],
+    export_static_lib_headers: ["absl_flags_flag"],
+}
+
+// Protocol definitions used by the Java client (generated as java-lite).
+filegroup {
+    name: "mozc_client_protos",
+    srcs: [
+        "protocol/candidate_window.proto",
+        "protocol/commands.proto",
+        "protocol/config.proto",
+        "protocol/engine_builder.proto",
+        "protocol/user_dictionary_storage.proto",
+    ],
+    path: ".",
+}

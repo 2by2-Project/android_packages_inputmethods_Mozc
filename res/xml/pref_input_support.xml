@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- Copyright 2010-2016, Google Inc.
+ Copyright 2010-2018, Google Inc.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -33,24 +33,25 @@
                   xmlns:mozc="http://schemas.android.com/apk/res-auto" >
   <PreferenceCategory android:title="@string/pref_input_feedback_category_title" >
     <CheckBoxPreference
-        android:defaultValue="false"
+        android:defaultValue="true"
         android:key="pref_haptic_feedback_key"
         android:summary="@string/pref_haptic_feedback_description"
         android:title="@string/pref_haptic_feedback_title" />
 
     <org.mozc.android.inputmethod.japanese.preference.SeekbarPreference
-        android:defaultValue="5"
+        android:defaultValue="0"
         android:key="pref_haptic_feedback_duration_key"
         android:title="@string/pref_haptic_feedback_duration_title"
         android:max="250"
         android:dependency="pref_haptic_feedback_key"
         mozc:seekbar_offset="0"
         mozc:seekbar_low_text="@string/pref_haptic_feedback_duration_low_text"
+        mozc:seekbar_zero_text="@string/pref_haptic_feedback_duration_system_default"
         mozc:seekbar_high_text="@string/pref_haptic_feedback_duration_high_text"
         mozc:seekbar_unit="ms" />
 
     <CheckBoxPreference
-        android:defaultValue="false"
+        android:defaultValue="true"
         android:key="pref_sound_feedback_key"
         android:summary="@string/pref_sound_feedback_description"
         android:title="@string/pref_sound_feedback_title" />

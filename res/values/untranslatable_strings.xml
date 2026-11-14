@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- Copyright 2010-2016, Google Inc.
+ Copyright 2010-2018, Google Inc.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
 -->
 <resources>
     <!-- Default skin for pre-L -->
-    <string name="pref_skin_type_default" translatable="false">BLUE_DARKGRAY</string>
+    <string name="pref_skin_type_default" translatable="false">MATERIAL_YOU</string>
 
     <!-- Preference url -->
     <string name="pref_oss_credits_url" translatable="false">file:///android_asset/credits_en.html</string>
@@ -84,4 +84,6 @@
       <string name="japanese_pos_for_dictionary_export_free_standing_word" translatable="false">独立語</string>
       <string name="japanese_pos_for_dictionary_export_suppression_word" translatable="false">抑制単語</string>
 
+    <!-- Added by 2by2 Project (2026). -->
+    <string name="pref_skin_type_material_you" translatable="false">Material You</string>
 </resources>

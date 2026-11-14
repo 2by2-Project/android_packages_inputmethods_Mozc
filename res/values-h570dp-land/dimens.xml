@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- Copyright 2010-2016, Google Inc.
+ Copyright 2010-2018, Google Inc.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -36,21 +36,21 @@
 <resources>
 
   <!-- symbol_view_major_category_height = input_frame_height / 4 (3 is for candidate rows, 1 is for major category) -->
-  <dimen name="symbol_view_major_category_height">68.25dip</dimen>
+  <dimen name="symbol_view_major_category_height">50.5dip</dimen>
 
   <!--
        ime_window_height = input_frame_height + (candidate_text_size + candidate_vertical_padding_size * 2) * n
        n = 2 for portrait. Otherwise n = 1.
     -->
-  <dimen name="ime_window_height">323dip</dimen>
-  <dimen name="input_frame_height">273dip</dimen>
+  <dimen name="ime_window_height">248dip</dimen>
+  <dimen name="input_frame_height">202dip</dimen>
 
   <!-- symbol_view_height = input_frame_height + (candidate_text_size + candidate_vertical_padding_size * 2) -->
-  <dimen name="symbol_view_height">323dip</dimen>
+  <dimen name="symbol_view_height">248dip</dimen>
   <!-- symbol_view_number_keyboard_height = input_frame_height - symbol_view_major_category_height -->
-  <dimen name="symbol_view_number_keyboard_height">204.75dip</dimen>
+  <dimen name="symbol_view_number_keyboard_height">151.5dip</dimen>
   <!-- button_frame_height = candidate_text_size + candidate_vertical_padding_size * 2 -->
-  <dimen name="button_frame_height">50dip</dimen>
+  <dimen name="button_frame_height">46dip</dimen>
 
   <!-- Character size of keyboard, depending on the screen size. -->
   <dimen name="keyboard_qwerty_default_height">47dip</dimen>

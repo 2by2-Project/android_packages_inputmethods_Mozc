@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- Copyright 2010-2016, Google Inc.
+ Copyright 2010-2018, Google Inc.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -34,18 +34,18 @@
 
     <!-- TODO(matsuzakit): Create new arrays_skin.xml into values-v20?v21? and remove material design from this file. -->
     <string-array name="pref_skin_type_entries">
+        <item>@string/pref_skin_type_material_you</item>
         <item>@string/pref_skin_type_blue_lightgray</item>
         <item>@string/pref_skin_type_orange_lightgray</item>
         <item>@string/pref_skin_type_blue_darkgray</item>
-        <item>@string/pref_skin_type_material_design_light</item>
-        <item>@string/pref_skin_type_material_design_dark</item>
+        <item>@string/pref_skin_type_material_design</item>
     </string-array>
     <string-array name="pref_skin_type_values">
+        <item>MATERIAL_YOU</item>
         <item>BLUE_LIGHTGRAY</item>
         <item>ORANGE_LIGHTGRAY</item>
         <item>BLUE_DARKGRAY</item>
-        <item>MATERIAL_DESIGN_LIGHT</item>
-        <item>MATERIAL_DESIGN_DARK</item>
+        <item>MATERIAL_DESIGN</item>
     </string-array>
 
 </resources>
