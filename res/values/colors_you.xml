@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2026 The 2by2 Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<!-- Material You palette, identical to LatinIME's themes-you-colors.xml. -->
+<resources>
+    <color name="you_keyboard_background">@android:color/system_neutral1_50</color>
+    <color name="you_key_normal">@android:color/system_neutral1_0</color>
+    <color name="you_key_pressed">@android:color/system_neutral1_100</color>
+    <color name="you_key_text">@android:color/system_neutral1_900</color>
+    <color name="you_key_functional_normal">@android:color/system_accent2_100</color>
+    <color name="you_key_functional_pressed">@android:color/system_neutral2_200</color>
+    <color name="you_key_functional_text">@android:color/system_neutral1_900</color>
+    <color name="you_key_action_normal">@android:color/system_accent1_200</color>
+    <color name="you_key_action_pressed">@android:color/system_accent1_400</color>
+    <color name="you_key_hint">@android:color/system_neutral1_400</color>
+    <color name="you_highlight">@android:color/system_accent1_500</color>
+    <color name="you_transparent">#00000000</color>
+    <color name="you_flick_highlight">@android:color/system_accent1_600</color>
+    <color name="you_popup_shadow">#40000000</color>
+</resources>

@@ -1,0 +1,158 @@
+//
+// Copyright (C) 2026 The 2by2 Project
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+
+package {
+    default_applicable_licenses: ["packages_inputmethods_Mozc_license"],
+}
+
+license {
+    name: "packages_inputmethods_Mozc_license",
+    visibility: [":__subpackages__"],
+    license_kinds: [
+        "SPDX-license-identifier-Apache-2.0",
+        "SPDX-license-identifier-BSD-3-Clause",
+    ],
+    license_text: ["NOTICE"],
+}
+
+// ---- Build-time generators for the client ----------------------------------
+
+python_binary_host {
+    name: "mozc_client_transform_svg",
+    main: "tools/client/transform_svg.py",
+    srcs: ["tools/client/transform_svg.py"],
+}
+
+python_binary_host {
+    name: "mozc_client_gen_drawable",
+    main: "tools/client/gen_mozc_drawable.py",
+    srcs: ["tools/client/gen_mozc_drawable.py"],
+}
+
+python_binary_host {
+    name: "mozc_client_gen_emoji_data",
+    main: "tools/client/gen_emoji_data.py",
+    srcs: ["tools/client/gen_emoji_data.py"],
+}
+
+python_binary_host {
+    name: "mozc_client_gen_emoticon_data",
+    main: "tools/client/gen_emoticon_data.py",
+    srcs: ["tools/client/gen_emoticon_data.py"],
+}
+
+// Keyboard images, step 1: expand the key templates into SVG files.
+genrule {
+    name: "mozc_client_transformed_svg",
+    tools: ["mozc_client_transform_svg"],
+    srcs: ["client_data/images/template/*.svg"],
+    out: ["transformed_svg.zip"],
+    cmd: "$(location mozc_client_transform_svg) --output_zip $(out) $(in)",
+}
+
+// Keyboard images, step 2: SVG -> Mozc picture drawables (res/raw/*.pic).
+genrule {
+    name: "mozc_client_drawables",
+    tools: [
+        "mozc_client_gen_drawable",
+        "soong_zip",
+    ],
+    srcs: [
+        "client_data/images/svg/*.svg",
+        ":mozc_client_transformed_svg",
+    ],
+    out: ["mozc_drawables.zip"],
+    cmd: "$(location mozc_client_gen_drawable) " +
+        "--output_dir=$(genDir)/res/raw --build_log=$(genDir)/gen_mozc_drawable.log $(in) && " +
+        "$(location soong_zip) -o $(out) -C $(genDir)/res -D $(genDir)/res",
+}
+
+// Emoji / emoticon / symbol tables for the symbol palette.
+genrule {
+    name: "mozc_client_palette_data",
+    tools: [
+        "mozc_client_gen_emoji_data",
+        "mozc_client_gen_emoticon_data",
+    ],
+    srcs: [
+        "client_data/emoji_data.tsv",
+        "client_data/emoticon_categorized.tsv",
+        "client_data/symbol_categorized.tsv",
+    ],
+    out: [
+        "org/mozc/android/inputmethod/japanese/emoji/EmojiData.java",
+        "org/mozc/android/inputmethod/japanese/EmoticonData.java",
+        "org/mozc/android/inputmethod/japanese/SymbolData.java",
+    ],
+    cmd: "$(location mozc_client_gen_emoji_data) " +
+        "--emoji_data $(location client_data/emoji_data.tsv) " +
+        "--output $(genDir)/org/mozc/android/inputmethod/japanese/emoji/EmojiData.java && " +
+        "$(location mozc_client_gen_emoticon_data) " +
+        "--input $(location client_data/emoticon_categorized.tsv) " +
+        "--output $(genDir)/org/mozc/android/inputmethod/japanese/EmoticonData.java " +
+        "--class_name EmoticonData --value_column 0 --category_column 1 && " +
+        "$(location mozc_client_gen_emoticon_data) " +
+        "--input $(location client_data/symbol_categorized.tsv) " +
+        "--output $(genDir)/org/mozc/android/inputmethod/japanese/SymbolData.java " +
+        "--class_name SymbolData --value_column 0 --category_column 1",
+}
+
+// ---- Data ------------------------------------------------------------------
+
+// The OSS dictionary data set, generated from native/data at build time.
+prebuilt_usr_share {
+    name: "mozc.data",
+    src: ":mozc_data_manager_oss_mozc_dataset_for_oss",
+    sub_dir: "mozc",
+    filename: "mozc.data",
+    product_specific: true,
+}
+
+// ---- Client ----------------------------------------------------------------
+
+android_app {
+    name: "Mozc",
+    manifest: "AndroidManifest.xml",
+    srcs: [
+        "src/**/*.java",
+        ":mozc_client_palette_data",
+        ":mozc_client_protos",
+        "client_proto/*.proto",
+    ],
+    proto: {
+        type: "lite",
+        canonical_path_from_root: false,
+        // client_proto/ imports the engine's protocol/*.proto.
+        local_include_dirs: ["native"],
+    },
+    resource_dirs: ["res"],
+    resource_zips: [":mozc_client_drawables"],
+    // The client code refers to the resources through upstream's separate
+    // "resources" package. The resource processor only generates the R class
+    // of the app package, so let aapt2 generate both.
+    aaptflags: [
+        "--extra-packages",
+        "org.mozc.android.inputmethod.japanese.resources",
+    ],
+    use_resource_processor: false,
+    asset_dirs: ["assets"],
+    static_libs: [
+        "androidx.core_core",
+        "androidx.viewpager_viewpager",
+        "guava",
+        "jsr305",
+        "libprotobuf-java-lite",
+    ],
+    jni_libs: ["libmozc"],
+    use_embedded_native_libs: true,
+    required: ["mozc.data"],
+    sdk_version: "current",
+    min_sdk_version: "29",
+    product_specific: true,
+    optimize: {
+        enabled: false,
+    },
+}

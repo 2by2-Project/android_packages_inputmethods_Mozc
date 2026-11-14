@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- Copyright 2010-2016, Google Inc.
+ Copyright 2010-2018, Google Inc.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -42,10 +42,10 @@
         android:persistent="false"
         android:summary="@string/pref_about_terms_of_service_description"
         android:title="@string/pref_about_terms_of_service_title">
+      <!-- Modified by 2by2 Project (2026): opened in the browser; the IME has no network
+           access for the in-app browser. -->
       <intent
-          android:action="android.intent.action.MAIN"
-          android:targetPackage="org.mozc.android.inputmethod.japanese"
-          android:targetClass="org.mozc.android.inputmethod.japanese.preference.MiniBrowserActivity"
+          android:action="android.intent.action.VIEW"
           android:data="@string/pref_about_terms_of_service_url" />
     </Preference>
 
@@ -54,10 +54,10 @@
         android:persistent="false"
         android:summary="@string/pref_about_privacy_policy_description"
         android:title="@string/pref_about_privacy_policy_title">
+      <!-- Modified by 2by2 Project (2026): opened in the browser; the IME has no network
+           access for the in-app browser. -->
       <intent
-          android:action="android.intent.action.MAIN"
-          android:targetPackage="org.mozc.android.inputmethod.japanese"
-          android:targetClass="org.mozc.android.inputmethod.japanese.preference.MiniBrowserActivity"
+          android:action="android.intent.action.VIEW"
           android:data="@string/pref_about_privacy_policy_url" />
     </Preference>
 

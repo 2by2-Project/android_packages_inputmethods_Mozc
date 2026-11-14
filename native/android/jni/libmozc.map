@@ -1,0 +1,13 @@
+#
+# Copyright (C) 2026 The 2by2 Project
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+# Only the JNI entry point of libmozc.so is exported (upstream mozcjni.cc
+# defines Java_..._MozcJni_initialize, which registers the other natives).
+{
+  global:
+    Java_*;
+  local:
+    *;
+};

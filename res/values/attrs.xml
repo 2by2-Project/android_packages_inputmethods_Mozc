@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- Copyright 2010-2016, Google Inc.
+ Copyright 2010-2018, Google Inc.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@
     <attr name="seekbar_low_text" format="string" />
     <attr name="seekbar_middle_text" format="string" />
     <attr name="seekbar_high_text" format="string" />
+    <attr name="seekbar_zero_text" format="string" />
   </declare-styleable>
 
   <declare-styleable name="MozcMultiSelectListPreference">
@@ -60,6 +61,9 @@
       <enum name="keyboardSeparatorCenter" value="8" />
       <enum name="keyboardSeparatorBottom" value="9" />
       <enum name="transparent" value="10" />
+      <!-- Added by 2by2 Project (2026): action (enter) keys. -->
+      <enum name="twelvekeysAction" value="11" />
+      <enum name="qwertyAction" value="12" />
     </attr>
 
     <attr name="keyWidth" format="dimension|fraction" />

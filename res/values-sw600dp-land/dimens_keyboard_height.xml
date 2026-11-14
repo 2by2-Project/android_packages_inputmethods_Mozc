@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2026 The 2by2 Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<!-- Keyboard heights on tablets: LatinIME's config_default_keyboard_height
+     scaled like the phone keyboard (Gboard's Japanese 12-key keyboard). -->
+<resources>
+    <dimen name="input_frame_height">325.4dip</dimen>
+    <dimen name="candidate_text_size">22dip</dimen>
+    <dimen name="candidate_vertical_padding_size">17dip</dimen>
+    <dimen name="button_frame_height">56dip</dimen>
+    <dimen name="ime_window_height">381.4dip</dimen>
+    <dimen name="symbol_view_height">381.4dip</dimen>
+    <dimen name="symbol_view_major_category_height">81.35dip</dimen>
+    <dimen name="symbol_view_number_keyboard_height">244.05dip</dimen>
+</resources>

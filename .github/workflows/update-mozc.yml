@@ -1,0 +1,66 @@
+#
+# Copyright (C) 2026 The 2by2 Project
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+# Follows upstream Mozc releases: re-imports native/ (engine sources, OSS
+# dictionary data and the generated Android.bp) with tools/update_mozc.py and
+# opens a pull request when a new release tag is available.
+
+name: Update Mozc
+
+on:
+  schedule:
+    - cron: "0 3 * * 1"  # every Monday 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Upstream google/mozc tag (default: latest release)"
+        required: false
+        default: "latest"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Import upstream Mozc
+        id: import
+        run: |
+          before="$(cat native/VERSION 2>/dev/null || true)"
+          python3 -I tools/update_mozc.py --tag "${{ github.event.inputs.tag || 'latest' }}"
+          after="$(cat native/VERSION)"
+          echo "before=${before}" >> "$GITHUB_OUTPUT"
+          echo "version=${after}" >> "$GITHUB_OUTPUT"
+
+      - name: Check the generated build files
+        run: |
+          # Syntax check without writing __pycache__ into the tree.
+          python3 -c 'import ast, sys; [ast.parse(open(f).read(), f) for f in sys.argv[1:]]' tools/*.py tools/client/*.py
+          test -s native/Android.bp
+          grep -q 'name: "libmozc"' native/Android.bp
+          grep -q 'name: "mozc_data_manager_oss_mozc_dataset_for_oss"' native/Android.bp
+
+      - name: Create pull request
+        if: steps.import.outputs.before != steps.import.outputs.version
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: update/mozc-${{ steps.import.outputs.version }}
+          commit-message: "Mozc: Update to ${{ steps.import.outputs.version }}"
+          title: "Mozc: Update to ${{ steps.import.outputs.version }}"
+          body: |
+            Imports upstream [google/mozc ${{ steps.import.outputs.version }}](https://github.com/google/mozc/releases/tag/${{ steps.import.outputs.version }})
+            (engine sources, OSS dictionary data, generated `native/Android.bp`)
+            with `tools/update_mozc.py`.
+
+            Please build (`m Mozc`) and test on a device before merging.
+          delete-branch: true
