@@ -110,6 +110,13 @@ public class LocalSessionHandler implements SessionHandler {
    */
   private static String extractBundledDataFile(Context context) {
     File dataFile = new File(context.getFilesDir(), BUNDLED_DATA_ASSET_NAME);
+    InputStream in;
+    try {
+      in = context.getAssets().open(BUNDLED_DATA_ASSET_NAME);
+    } catch (IOException e) {
+      // No data set is bundled in this build (the system build).
+      return null;
+    }
     try {
       long lastUpdateTime = 0;
       try {
@@ -124,8 +131,7 @@ public class LocalSessionHandler implements SessionHandler {
         return dataFile.getAbsolutePath();
       }
       File tmpFile = new File(context.getFilesDir(), BUNDLED_DATA_ASSET_NAME + ".tmp");
-      try (InputStream in = context.getAssets().open(BUNDLED_DATA_ASSET_NAME);
-          OutputStream out = new FileOutputStream(tmpFile)) {
+      try (OutputStream out = new FileOutputStream(tmpFile)) {
         byte[] buffer = new byte[64 * 1024];
         int length;
         while ((length = in.read(buffer)) > 0) {
@@ -137,12 +143,15 @@ public class LocalSessionHandler implements SessionHandler {
         return null;
       }
       return dataFile.getAbsolutePath();
-    } catch (java.io.FileNotFoundException e) {
-      // No data set is bundled in this build.
-      return null;
     } catch (IOException e) {
       MozcLog.e("Failed to extract the bundled mozc.data", e);
       return null;
+    } finally {
+      try {
+        in.close();
+      } catch (IOException e) {
+        // Ignore.
+      }
     }
   }
 

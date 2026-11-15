@@ -268,6 +268,7 @@ public class SessionExecutor {
      * Just pass a message to callback.
      */
     static final int PASS_TO_CALLBACK = 6;
+    static final int MERGE_IMPOSED_CONFIG = 7;
 
     @VisibleForTesting static final long INVALID_SESSION_ID = 0;
 
@@ -322,6 +323,9 @@ public class SessionExecutor {
           break;
         case PASS_TO_CALLBACK:
           passToCallBack(KeyEventCallbackContext.class.cast(message.obj));
+          break;
+        case MERGE_IMPOSED_CONFIG:
+          mergeImposedConfig(Config.class.cast(message.obj));
           break;
         default:
           // We don't process unknown messages.
@@ -492,6 +496,16 @@ public class SessionExecutor {
           .build();
       // Do not render the result because the result does not have preedit.
       evaluate(input);
+    }
+
+    /** Merges {@code imposed} into the engine's current config, on the worker thread. */
+    @VisibleForTesting void mergeImposedConfig(Config imposed) {
+      Config current = evaluate(Input.newBuilder().setType(CommandType.GET_CONFIG).build())
+          .getOutput().getConfig();
+      evaluate(Input.newBuilder()
+          .setType(CommandType.SET_CONFIG)
+          .setConfig(current.toBuilder().mergeFrom(imposed))
+          .build());
     }
 
     @VisibleForTesting void passToCallBack(KeyEventCallbackContext context) {
@@ -829,20 +843,46 @@ public class SessionExecutor {
    */
   public void setConfig(Config config) {
     Preconditions.checkNotNull(config);
+    baseConfig = Optional.of(config);
+    sendConfig(config.toBuilder().mergeFrom(imposedConfig).build());
+  }
+
+  private void sendConfig(Config config) {
     // Ignore output.
     evaluateAsynchronously(
         Input.newBuilder().setType(Input.CommandType.SET_CONFIG).setConfig(config),
         Optional.<KeyEventInterface>absent(), Optional.<EvaluationCallback>absent());
   }
 
+  // Modified by 2by2 Project (2026): SET_IMPOSED_CONFIG was removed from the engine. The imposed
+  // values are merged over the preference config here instead of reading the engine's config
+  // synchronously, which blocked the UI thread every time the keyboard was shown (lag on IME
+  // switching, and an unresponsive keyboard while the engine was busy).
+  /** The config from the preferences, given by {@link #setConfig}. */
+  private Optional<Config> baseConfig = Optional.absent();
+  /** The config imposed by the client, merged over {@link #baseConfig}. */
+  private Config imposedConfig = Config.getDefaultInstance();
+
   /**
    * Sets the given {@code config} to the server as imposed config.
    */
   public void setImposedConfig(Config config) {
     Preconditions.checkNotNull(config);
-    // SET_IMPOSED_CONFIG was removed from the engine: merge the values into the stored config.
-    Config merged = getConfig().toBuilder().mergeFrom(config).build();
-    setConfig(merged);
+    if (baseConfig.isPresent()) {
+      if (config.equals(imposedConfig)) {
+        // Already applied: avoid rewriting the engine's config every time the keyboard is shown.
+        return;
+      }
+      imposedConfig = config;
+      sendConfig(baseConfig.get().toBuilder().mergeFrom(imposedConfig).build());
+      return;
+    }
+    // The preference config is not known yet: merge with the engine's config on the worker
+    // thread, without blocking the caller.
+    imposedConfig = config;
+    Preconditions.checkState(handler.isPresent());
+    handler.get().sendMessage(
+        handler.get().obtainMessage(ExecutorMainCallback.MERGE_IMPOSED_CONFIG, config));
   }
 
   /**

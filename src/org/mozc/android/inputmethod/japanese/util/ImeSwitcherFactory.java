@@ -163,7 +163,7 @@ public class ImeSwitcherFactory {
         @Override
         public void setInputMethodAndSubtype(IBinder token,
             String id, InputMethodSubtype subtype) {
-          inputMethodManager.setInputMethodAndSubtype(token, id, subtype);
+          inputMethodService.switchInputMethod(id, subtype);
         }
       });
     }
@@ -246,8 +246,9 @@ public class ImeSwitcherFactory {
 
     @Override
     public boolean switchToNextInputMethod(boolean onlyCurrentIme) {
-      return MozcUtil.getInputMethodManager(inputMethodService)
-                 .switchToNextInputMethod(getToken(), onlyCurrentIme);
+      // Modified by 2by2 Project (2026): the IME window token based InputMethodManager APIs are
+      // deprecated; use the service's own API (API level 28+).
+      return inputMethodService.switchToNextInputMethod(onlyCurrentIme);
     }
   }
 
@@ -263,8 +264,7 @@ public class ImeSwitcherFactory {
 
     @Override
     public boolean shouldOfferSwitchingToNextInputMethod() {
-      return MozcUtil.getInputMethodManager(inputMethodService)
-          .shouldOfferSwitchingToNextInputMethod(getToken());
+      return inputMethodService.shouldOfferSwitchingToNextInputMethod();
     }
   }
 

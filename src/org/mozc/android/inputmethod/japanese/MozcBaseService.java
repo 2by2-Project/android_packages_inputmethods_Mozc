@@ -82,6 +82,7 @@ import android.inputmethodservice.InputMethodService;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
@@ -137,16 +138,57 @@ public class MozcBaseService extends InputMethodService {
 
     @Override
     public void startInput(InputConnection inputConnection, EditorInfo attribute) {
+      logStartInput("startInput", inputConnection, attribute);
       super.startInput(
           ComposingTextTrackingInputConnection.newInstance(inputConnection), attribute);
     }
 
     @Override
     public void restartInput(InputConnection inputConnection, EditorInfo attribute) {
+      logStartInput("restartInput", inputConnection, attribute);
       super.restartInput(
           ComposingTextTrackingInputConnection.newInstance(inputConnection), attribute);
     }
   }
+
+  // Diagnostics added by 2by2 Project (2026) to track down input getting lost in some
+  // applications. Read with: adb logcat -s Mozc
+  private static void logStartInput(
+      String method, @Nullable InputConnection inputConnection, @Nullable EditorInfo attribute) {
+    MozcLog.i(method + ": connection=" + (inputConnection == null ? "null" : "ok")
+        + " " + describeEditor(attribute));
+  }
+
+  private static String describeEditor(@Nullable EditorInfo attribute) {
+    if (attribute == null) {
+      return "editor=null";
+    }
+    return "package=" + attribute.packageName
+        + " inputType=0x" + Integer.toHexString(attribute.inputType)
+        + " imeOptions=0x" + Integer.toHexString(attribute.imeOptions)
+        + " fieldId=" + attribute.fieldId
+        + " sel=" + attribute.initialSelStart + "-" + attribute.initialSelEnd;
+  }
+
+  /**
+   * Time to wait for the application to report a composing text set by this IME (through
+   * onUpdateSelection) before logging that the input did not reach the application.
+   */
+  private static final long COMPOSITION_ACK_TIMEOUT_MS = 2000;
+
+  private final Handler compositionWatchdogHandler = new Handler(Looper.getMainLooper());
+  private final Runnable compositionWatchdog = new Runnable() {
+    @Override
+    public void run() {
+      if (!isInputViewShown()) {
+        return;
+      }
+      MozcLog.w("The application did not acknowledge the composing text within "
+          + COMPOSITION_ACK_TIMEOUT_MS + "ms; the input may not reach it. inputBound=" + inputBound
+          + " connection=" + (getCurrentInputConnection() == null ? "null" : "ok")
+          + " " + describeEditor(getCurrentInputEditorInfo()));
+    }
+  };
 
   private static class RealFeedbackListener implements FeedbackListener {
     private final Vibrator vibrator;
@@ -577,11 +619,13 @@ public class MozcBaseService extends InputMethodService {
   @Override
   public void onBindInput() {
     super.onBindInput();
+    MozcLog.i("onBindInput");
     inputBound = true;
   }
 
   @Override
   public void onUnbindInput() {
+    MozcLog.i("onUnbindInput");
     inputBound = false;
     super.onUnbindInput();
   }
@@ -624,6 +668,8 @@ public class MozcBaseService extends InputMethodService {
 
   @Override
   public void onDestroy() {
+    MozcLog.i("onDestroy");
+    compositionWatchdogHandler.removeCallbacks(compositionWatchdog);
     feedbackManager.release();
     if (sessionExecutor != null) {
       sessionExecutor.syncData();
@@ -775,6 +821,8 @@ public class MozcBaseService extends InputMethodService {
 
   @Override
   public void onFinishInput() {
+    MozcLog.i("onFinishInput");
+    compositionWatchdogHandler.removeCallbacks(compositionWatchdog);
     // Omit rendering because the input view will soon disappear.
     resetContext();
     selectionTracker.onFinishInput();
@@ -920,6 +968,8 @@ public class MozcBaseService extends InputMethodService {
   @Override
   public void onStartInputView(EditorInfo attribute, boolean restarting) {
     InputConnection inputConnection = getCurrentInputConnection();
+    MozcLog.i("onStartInputView: restarting=" + restarting
+        + " connection=" + (inputConnection == null ? "null" : "ok"));
     if (inputConnection != null && Build.VERSION.SDK_INT >= 21) {
       viewManager.setCursorAnchorInfoEnabled(enableCursorAnchorInfo(inputConnection));
       updateImposedConfig();
@@ -1187,6 +1237,7 @@ public class MozcBaseService extends InputMethodService {
 
   @Override
   public void onWindowShown() {
+    MozcLog.i("onWindowShown");
     showStatusIcon();
     // Remove memory trimming message.
     memoryTrimmingHandler.removeMessages(MemoryTrimmingHandler.WHAT);
@@ -1202,6 +1253,8 @@ public class MozcBaseService extends InputMethodService {
 
   @Override
   public void onWindowHidden() {
+    MozcLog.i("onWindowHidden");
+    compositionWatchdogHandler.removeCallbacks(compositionWatchdog);
     // "Hiding IME's window" is very similar to "Turning off IME" for PC.
     // Thus
     // - Committing composing text.
@@ -1262,6 +1315,10 @@ public class MozcBaseService extends InputMethodService {
       maybeCommitText(output, inputConnection);
       setComposingText(command, inputConnection);
       maybeSetSelection(output, inputConnection);
+      compositionWatchdogHandler.removeCallbacks(compositionWatchdog);
+      if (output.hasPreedit() && getPreeditLength(output.getPreedit()) > 0) {
+        compositionWatchdogHandler.postDelayed(compositionWatchdog, COMPOSITION_ACK_TIMEOUT_MS);
+      }
       selectionTracker.onRender(
           output.hasDeletionRange() ? output.getDeletionRange() : null,
           output.hasResult() ? output.getResult().getValue() : null,
@@ -1770,6 +1827,7 @@ public class MozcBaseService extends InputMethodService {
   public void onUpdateSelection(int oldSelStart, int oldSelEnd,
                                 int newSelStart, int newSelEnd,
                                 int candidatesStart, int candidatesEnd) {
+    compositionWatchdogHandler.removeCallbacks(compositionWatchdog);
     onUpdateSelectionInternal(
         oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd);
     super.onUpdateSelection(
