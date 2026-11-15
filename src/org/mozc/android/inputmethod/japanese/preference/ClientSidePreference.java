@@ -110,6 +110,9 @@ public class ClientSidePreference {
   /** Percentage of keyboard height */
   private final int keyboardHeightRatio;
 
+  /** Number of the candidate rows above the keyboard (added by 2by2 Project). */
+  private final int candidateRows;
+
   /** Whether the cursor is put between a pair of brackets (added by 2by2 Project). */
   private final boolean bracketPairCursor;
 
@@ -140,8 +143,12 @@ public class ClientSidePreference {
     this.isMicrophoneButtonEnabled = isMicrophoneButtonEnabled;
     this.layoutAdjustment = Preconditions.checkNotNull(layoutAdjustment);
     this.keyboardHeightRatio = keyboardHeightRatio;
+    this.candidateRows = DEFAULT_CANDIDATE_ROWS;
     this.bracketPairCursor = true;
   }
+
+  /** Default number of candidate rows: one, like Gboard. */
+  public static final int DEFAULT_CANDIDATE_ROWS = 1;
 
   public ClientSidePreference(
       SharedPreferences sharedPreferences, Resources resources, int deviceOrientation) {
@@ -217,8 +224,19 @@ public class ClientSidePreference {
     layoutAdjustment = PreferenceUtil.getEnum(
         sharedPreferences, layoutAdjustmentKey, LayoutAdjustment.class, LayoutAdjustment.FILL);
     keyboardHeightRatio = sharedPreferences.getInt(keyboardHeightRatioKey, 100);
+    candidateRows = getCandidateRows(sharedPreferences);
     bracketPairCursor =
         sharedPreferences.getBoolean(PreferenceUtil.PREF_BRACKET_PAIR_CURSOR_KEY, true);
+  }
+
+  private static int getCandidateRows(SharedPreferences sharedPreferences) {
+    String value = sharedPreferences.getString(
+        PreferenceUtil.PREF_CANDIDATE_ROWS_KEY, Integer.toString(DEFAULT_CANDIDATE_ROWS));
+    try {
+      return Math.max(1, Integer.parseInt(value));
+    } catch (NumberFormatException e) {
+      return DEFAULT_CANDIDATE_ROWS;
+    }
   }
 
   public boolean isHapticFeedbackEnabled() {
@@ -283,6 +301,10 @@ public class ClientSidePreference {
 
   public int getKeyboardHeightRatio() {
     return keyboardHeightRatio;
+  }
+
+  public int getCandidateRows() {
+    return candidateRows;
   }
 
   public boolean isBracketPairCursorEnabled() {

@@ -319,6 +319,11 @@
       <string name="no">No</string>
 
       <!-- Added by 2by2 Project (2026). -->
+      <string name="pref_candidate_rows_title">Candidate rows</string>
+      <string name="pref_candidate_rows_description">Number of rows of the suggestions above the keyboard. Limited by the screen size.</string>
+      <string name="pref_candidate_rows_entry_1">1 row</string>
+      <string name="pref_candidate_rows_entry_2">2 rows</string>
+      <string name="pref_candidate_rows_entry_3">3 rows</string>
       <string name="pref_bracket_character_form_title">Brackets in Japanese input</string>
       <string name="pref_bracket_character_form_description">Width of ( ) [ ] { } typed in the Japanese input mode.</string>
       <string name="pref_bracket_character_form_entry_full">Full-width</string>

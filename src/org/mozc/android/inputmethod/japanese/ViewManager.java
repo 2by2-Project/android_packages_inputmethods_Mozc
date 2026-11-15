@@ -410,6 +410,7 @@ public class ViewManager implements ViewManagerInterface {
 
   /** Percentage of keyboard height */
   private int keyboardHeightRatio = 100;
+  private int candidateRows = 1;
 
   // Keycodes defined in resource files.
   // Printable keys are not defined. Refer them using character literal.
@@ -507,6 +508,7 @@ public class ViewManager implements ViewManagerInterface {
     // Suppress update of View's internal state
     // until all the updates done in this method are finished. Just in case.
     mozcView.setVisibility(View.GONE);
+    mozcView.setCandidateRows(candidateRows);
     mozcView.setKeyboardHeightRatio(keyboardHeightRatio);
     mozcView.setCursorAnchorInfoEnabled(cursorAnchroInfoEnabled);
     OnClickListener widenButtonClickListener = new OnClickListener() {
@@ -987,6 +989,15 @@ public class ViewManager implements ViewManagerInterface {
   public void setKeyboardHeightRatio(int keyboardHeightRatio) {
     this.keyboardHeightRatio = keyboardHeightRatio;
     if (mozcView != null) {
+      mozcView.setKeyboardHeightRatio(keyboardHeightRatio);
+    }
+  }
+
+  @Override
+  public void setCandidateRows(int candidateRows) {
+    this.candidateRows = candidateRows;
+    if (mozcView != null) {
+      mozcView.setCandidateRows(candidateRows);
       mozcView.setKeyboardHeightRatio(keyboardHeightRatio);
     }
   }

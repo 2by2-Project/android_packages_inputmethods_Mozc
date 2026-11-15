@@ -1661,6 +1661,10 @@ public class MozcBaseService extends InputMethodService {
         || oldPreference.getKeyboardHeightRatio() != newPreference.getKeyboardHeightRatio()) {
       viewManager.setKeyboardHeightRatio(newPreference.getKeyboardHeightRatio());
     }
+    if (oldPreference == null
+        || oldPreference.getCandidateRows() != newPreference.getCandidateRows()) {
+      viewManager.setCandidateRows(newPreference.getCandidateRows());
+    }
 
     propagatedClientSidePreference  = newPreference;
   }

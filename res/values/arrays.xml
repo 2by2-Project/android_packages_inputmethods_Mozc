@@ -32,6 +32,18 @@
 
 <resources>
   <!-- Added by 2by2 Project (2026). -->
+  <string-array name="pref_candidate_rows_entries">
+    <item>@string/pref_candidate_rows_entry_1</item>
+    <item>@string/pref_candidate_rows_entry_2</item>
+    <item>@string/pref_candidate_rows_entry_3</item>
+  </string-array>
+
+  <string-array name="pref_candidate_rows_values" translatable="false">
+    <item>1</item>
+    <item>2</item>
+    <item>3</item>
+  </string-array>
+
   <string-array name="pref_bracket_character_form_entries">
     <item>@string/pref_bracket_character_form_entry_full</item>
     <item>@string/pref_bracket_character_form_entry_half</item>

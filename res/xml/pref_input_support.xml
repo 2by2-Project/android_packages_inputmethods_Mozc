@@ -106,6 +106,14 @@
 
     <!-- Added by 2by2 Project (2026). -->
     <ListPreference
+        android:defaultValue="1"
+        android:entries="@array/pref_candidate_rows_entries"
+        android:entryValues="@array/pref_candidate_rows_values"
+        android:key="pref_candidate_rows_key"
+        android:summary="@string/pref_candidate_rows_description"
+        android:title="@string/pref_candidate_rows_title" />
+
+    <ListPreference
         android:defaultValue="FULL_WIDTH"
         android:entries="@array/pref_bracket_character_form_entries"
         android:entryValues="@array/pref_bracket_character_form_values"

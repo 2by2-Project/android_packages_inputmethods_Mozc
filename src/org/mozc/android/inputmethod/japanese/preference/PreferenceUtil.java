@@ -140,6 +140,8 @@ public class PreferenceUtil {
       "pref_portrait_keyboard_height_ratio_key";
 
   // Added by 2by2 Project (2026).
+  /** Number of the rows of the suggestion/conversion candidates above the keyboard. */
+  public static final String PREF_CANDIDATE_ROWS_KEY = "pref_candidate_rows_key";
   /** Character form (full-width/half-width) of brackets in the Japanese input mode. */
   public static final String PREF_BRACKET_CHARACTER_FORM_KEY = "pref_bracket_character_form_key";
   /** Whether the cursor is put between a pair of brackets (e.g. a "kakko" candidate). */

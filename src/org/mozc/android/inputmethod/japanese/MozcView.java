@@ -310,6 +310,17 @@ public class MozcView extends FrameLayout implements MemoryManageable {
     super.onMeasure(widthMeasureSpec, heightMeasureSpec);
   }
 
+  /** Number of the candidate rows above the keyboard (see {@link #setKeyboardHeightRatio}). */
+  private int candidateRows = 1;
+
+  /**
+   * Sets the number of the candidate rows. Takes effect on the next
+   * {@link #setKeyboardHeightRatio} call.
+   */
+  void setCandidateRows(int candidateRows) {
+    this.candidateRows = candidateRows;
+  }
+
   /** Height of the system navigation bar overlapping the bottom of the IME window. */
   private int navigationBarHeight = 0;
 
@@ -963,8 +974,17 @@ public class MozcView extends FrameLayout implements MemoryManageable {
     float originalInputFrameHeight = resources.getDimension(R.dimen.input_frame_height);
     inputFrameHeight = Math.round(originalInputFrameHeight * heightScale);
     int minImeWindowHeight = inputFrameHeight + dimensionPixelSize.buttonFrameHeight;
-    imeWindowHeight =
-        Math.max(Math.round(originalImeWindowHeight * heightScale), minImeWindowHeight);
+    // Modified by 2by2 Project (2026): the candidate area above the keyboard has as many rows as
+    // the preference says (one by default, like Gboard), up to the rows the screen size provides
+    // (ime_window_height = input_frame_height + row height * rows).
+    float originalCandidateAreaHeight = originalImeWindowHeight - originalInputFrameHeight;
+    float rowHeight = resources.getDimension(R.dimen.button_frame_height);
+    int originalRows = Math.max(1, Math.round(originalCandidateAreaHeight / rowHeight));
+    int rows = Math.min(Math.max(1, candidateRows), originalRows);
+    float candidateAreaHeight = originalCandidateAreaHeight * rows / originalRows;
+    imeWindowHeight = Math.max(
+        Math.round((originalInputFrameHeight + candidateAreaHeight) * heightScale),
+        minImeWindowHeight);
     symbolInputViewHeight = Math.min(imeWindowHeight, minImeWindowHeight);
 
     updateInputFrameHeight();
