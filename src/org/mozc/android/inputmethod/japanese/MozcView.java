@@ -265,8 +265,17 @@ public class MozcView extends FrameLayout implements MemoryManageable {
     setOnApplyWindowInsetsListener(new OnApplyWindowInsetsListener() {
       @Override
       public WindowInsets onApplyWindowInsets(View view, WindowInsets insets) {
+        // Use the "ignoring visibility" variants: while the navigation bar is temporarily hidden
+        // (e.g. the app behind switches to immersive mode, or during gesture/rotation/IME
+        // transitions), getInsets() reports 0 and the bottom margin would randomly disappear
+        // until the next insets dispatch.
+        int navigationBar = Math.max(
+            insets.getInsetsIgnoringVisibility(WindowInsets.Type.navigationBars()).bottom,
+            insets.getInsets(WindowInsets.Type.navigationBars()).bottom);
         int bottom = Math.max(
-            insets.getInsets(WindowInsets.Type.navigationBars()).bottom,
+            Math.max(
+                navigationBar,
+                insets.getInsetsIgnoringVisibility(WindowInsets.Type.tappableElement()).bottom),
             insets.getInsets(WindowInsets.Type.captionBar()).bottom);
         setNavigationBarHeight(bottom);
         return insets;
@@ -274,18 +283,41 @@ public class MozcView extends FrameLayout implements MemoryManageable {
     });
   }
 
+  @Override
+  protected void onAttachedToWindow() {
+    super.onAttachedToWindow();
+    requestApplyInsets();
+  }
+
+  @Override
+  protected void onVisibilityChanged(View changedView, int visibility) {
+    super.onVisibilityChanged(changedView, visibility);
+    if (changedView == this && visibility == VISIBLE) {
+      // The insets may not be re-dispatched when this view is shown again, so make sure that
+      // the bottom margin is restored.
+      applyNavigationBarHeightToSpacer();
+      requestApplyInsets();
+    }
+  }
+
   /** Height of the system navigation bar overlapping the bottom of the IME window. */
   private int navigationBarHeight = 0;
 
   @VisibleForTesting
   void setNavigationBarHeight(int height) {
-    if (navigationBarHeight == height) {
+    navigationBarHeight = height;
+    applyNavigationBarHeightToSpacer();
+  }
+
+  /** Applies {@link #navigationBarHeight} to the spacer, even if the value itself is unchanged. */
+  private void applyNavigationBarHeightToSpacer() {
+    View spacer = findViewById(R.id.navigation_bar_spacer);
+    if (spacer == null) {
       return;
     }
-    navigationBarHeight = height;
-    View spacer = findViewById(R.id.navigation_bar_spacer);
-    if (spacer != null) {
-      setLayoutHeight(spacer, height);
+    ViewGroup.LayoutParams layoutParams = spacer.getLayoutParams();
+    if (layoutParams != null && layoutParams.height != navigationBarHeight) {
+      setLayoutHeight(spacer, navigationBarHeight);
     }
   }
 
