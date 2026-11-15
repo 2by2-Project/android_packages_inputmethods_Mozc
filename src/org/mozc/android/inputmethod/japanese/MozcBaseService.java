@@ -184,10 +184,22 @@ public class MozcBaseService extends InputMethodService {
       if (!isInputViewShown()) {
         return;
       }
+      // Like LatinIME (RichInputConnection#reloadTextCache), ask the editor for its text: null
+      // means the application does not consider this IME connected.
+      InputConnection inputConnection = getCurrentInputConnection();
+      boolean responsive =
+          inputConnection != null && inputConnection.getTextBeforeCursor(1, 0) != null;
       MozcLog.w("The application did not acknowledge the composing text within "
           + COMPOSITION_ACK_TIMEOUT_MS + "ms; the input may not reach it. inputBound=" + inputBound
-          + " connection=" + (getCurrentInputConnection() == null ? "null" : "ok")
+          + " connection=" + (inputConnection == null ? "null" : "ok")
+          + " responsive=" + responsive
           + " " + describeEditor(getCurrentInputEditorInfo()));
+      if (!responsive) {
+        // Fall back to the ground state as LatinIME does, instead of keeping a composition the
+        // application does not have: typing starts over once the application answers again.
+        resetContext();
+        viewManager.render(Command.getDefaultInstance());
+      }
     }
   };
 
