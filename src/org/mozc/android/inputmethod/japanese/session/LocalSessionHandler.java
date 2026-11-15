@@ -36,8 +36,14 @@ import com.google.protobuf.InvalidProtocolBufferException;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * Concrete SessionHandler. Calls JNI.
@@ -50,8 +56,9 @@ public class LocalSessionHandler implements SessionHandler {
   @Override
   public void initialize(Context context) {
     File userProfileDirectory = getUserProfileDirectory(context);
-    // Load the shared object with the system data set installed by the build.
-    MozcJNI.load(userProfileDirectory.getAbsolutePath(), findDataFile());
+    // Load the shared object with the data set bundled in the APK (standalone builds) or the
+    // system data set installed by the build.
+    MozcJNI.load(userProfileDirectory.getAbsolutePath(), findDataFile(context));
   }
 
   /**
@@ -70,6 +77,9 @@ public class LocalSessionHandler implements SessionHandler {
     return userProfileDirectory;
   }
 
+  /** Asset name of the data set bundled in standalone (non-system) APK builds. */
+  private static final String BUNDLED_DATA_ASSET_NAME = "mozc.data";
+
   /** Candidate locations of the OSS data set (see prebuilt_usr_share "mozc.data"). */
   private static final String[] DATA_FILE_PATHS = {
       "/product/usr/share/mozc/mozc.data",
@@ -77,7 +87,13 @@ public class LocalSessionHandler implements SessionHandler {
       "/system/usr/share/mozc/mozc.data",
   };
 
-  private static String findDataFile() {
+  private static String findDataFile(Context context) {
+    // A data set bundled in the APK always matches the libmozc.so of the same APK, so it takes
+    // precedence. The system builds do not bundle it and fall through to the system paths.
+    String bundled = extractBundledDataFile(context);
+    if (bundled != null) {
+      return bundled;
+    }
     for (String path : DATA_FILE_PATHS) {
       if (new File(path).canRead()) {
         return path;
@@ -85,6 +101,49 @@ public class LocalSessionHandler implements SessionHandler {
     }
     MozcLog.e("mozc.data is not found. Falling back to the minimal engine.");
     return null;
+  }
+
+  /**
+   * Copies the data set bundled as an asset to the app's private storage (the engine needs a
+   * file path to mmap it) and returns its path, or {@code null} if no data set is bundled.
+   * The copy is refreshed whenever the app is installed or updated.
+   */
+  private static String extractBundledDataFile(Context context) {
+    File dataFile = new File(context.getFilesDir(), BUNDLED_DATA_ASSET_NAME);
+    try {
+      long lastUpdateTime = 0;
+      try {
+        PackageInfo packageInfo =
+            context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+        lastUpdateTime = packageInfo.lastUpdateTime;
+      } catch (PackageManager.NameNotFoundException e) {
+        // Always copy.
+      }
+      if (dataFile.canRead() && dataFile.length() > 0 && lastUpdateTime != 0
+          && dataFile.lastModified() >= lastUpdateTime) {
+        return dataFile.getAbsolutePath();
+      }
+      File tmpFile = new File(context.getFilesDir(), BUNDLED_DATA_ASSET_NAME + ".tmp");
+      try (InputStream in = context.getAssets().open(BUNDLED_DATA_ASSET_NAME);
+          OutputStream out = new FileOutputStream(tmpFile)) {
+        byte[] buffer = new byte[64 * 1024];
+        int length;
+        while ((length = in.read(buffer)) > 0) {
+          out.write(buffer, 0, length);
+        }
+      }
+      if (!tmpFile.renameTo(dataFile)) {
+        MozcLog.e("Failed to install the bundled mozc.data: " + dataFile.getAbsolutePath());
+        return null;
+      }
+      return dataFile.getAbsolutePath();
+    } catch (java.io.FileNotFoundException e) {
+      // No data set is bundled in this build.
+      return null;
+    } catch (IOException e) {
+      MozcLog.e("Failed to extract the bundled mozc.data", e);
+      return null;
+    }
   }
 
   @Override

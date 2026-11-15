@@ -1,0 +1,82 @@
+// Copyright (C) 2026 The 2by2 Project
+// SPDX-License-Identifier: Apache-2.0
+//
+// Standalone (non-AOSP) build of the Mozc client for quick tests. The sources,
+// resources, protos and native libraries are staged by ../prepare.sh into
+// ../generated; the Soong build (Android.bp) stays the source of truth.
+
+plugins {
+    id 'com.android.application'
+}
+
+def gen = file('../generated')
+def appIdFile = new File(gen, 'app_id.txt')
+if (!appIdFile.isFile()) {
+    throw new GradleException('Run standalone/prepare.sh first (missing ' + appIdFile + ')')
+}
+
+android {
+    // Package of the R class and of the activities. The application id below
+    // differs, so the app can be installed next to the system Mozc.
+    namespace 'org.mozc.android.inputmethod.japanese'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId appIdFile.text.trim()
+        minSdk 29
+        targetSdk 36
+        versionCode 1
+        versionName findProperty('appVersionName') ?: 'standalone'
+    }
+
+    signingConfigs {
+        // A fixed, public test key so that a new build can be installed over the
+        // previous one. Never use it for anything but test builds.
+        debug {
+            storeFile file('../debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile new File(gen, 'AndroidManifest.xml')
+            java.srcDirs = [new File(gen, 'java')]
+            res.srcDirs = [new File(gen, 'res')]
+            assets.srcDirs = [new File(gen, 'assets'), file('../../assets')]
+            jniLibs.srcDirs = [new File(gen, 'jniLibs')]
+        }
+    }
+
+    androidResources {
+        // mozc.data is copied out of the asset and mmapped by the engine.
+        noCompress += 'data'
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core:1.15.0'
+    implementation 'androidx.viewpager:viewpager:1.0.0'
+    implementation 'com.google.guava:guava:33.4.0-android'
+    implementation 'com.google.code.findbugs:jsr305:3.0.2'
+    // Must match the protoc used by prepare.sh (Ubuntu's protobuf-compiler 3.21.12).
+    implementation 'com.google.protobuf:protobuf-javalite:3.21.12'
+}

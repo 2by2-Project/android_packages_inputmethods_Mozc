@@ -1,0 +1,21 @@
+// Copyright (C) 2026 The 2by2 Project
+// SPDX-License-Identifier: Apache-2.0
+
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'mozc-standalone'
+include ':app'

@@ -1,0 +1,6 @@
+// Copyright (C) 2026 The 2by2 Project
+// SPDX-License-Identifier: Apache-2.0
+
+plugins {
+    id 'com.android.application' version '8.10.1' apply false
+}

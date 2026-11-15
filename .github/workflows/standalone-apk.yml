@@ -1,0 +1,143 @@
+# Copyright (C) 2026 The 2by2 Project
+# SPDX-License-Identifier: Apache-2.0
+#
+# Builds a standalone Mozc APK (debug-signed, application id
+# org.mozc.android.inputmethod.japanese.dev) for quick tests, without an AOSP tree.
+# It installs next to the system Mozc. See standalone/README.md.
+#
+# Run it from the Actions tab ("Run workflow", pick the branch) or by pushing.
+
+name: Standalone APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths-ignore:
+      - '**.md'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # libmozc.so (all ABIs) and mozc.data from the upstream Mozc release that
+  # native/ was generated from. This is slow, so it is cached on everything that
+  # can change it; Java-only changes reuse the cache and take a few minutes.
+  native:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Upstream version
+        id: ver
+        run: echo "version=$(tr -d '[:space:]' < native/VERSION)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore native outputs
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: native-out
+          # Bump the v1 when the way native-out is built changes.
+          key: native-v1-${{ steps.ver.outputs.version }}-${{ hashFiles('native/android/jni/mozcjni.cc') }}
+
+      - name: Check out upstream Mozc
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: >
+          git clone --depth 1 --branch "${{ steps.ver.outputs.version }}"
+          https://github.com/google/mozc.git "$RUNNER_TEMP/mozc"
+
+      - name: Install build dependencies (Android NDK etc.)
+        if: steps.cache.outputs.cache-hit != 'true'
+        working-directory: ${{ runner.temp }}/mozc/src
+        run: python3 build_tools/update_deps.py
+
+      - name: Build libmozc.so
+        if: steps.cache.outputs.cache-hit != 'true'
+        working-directory: ${{ runner.temp }}/mozc/src
+        run: |
+          command -v bazelisk >/dev/null || sudo npm install -g @bazel/bazelisk
+          bazelisk build --config oss_android --config release_build package
+          mkdir -p "$GITHUB_WORKSPACE/native-out"
+          cp -L bazel-bin/android/jni/native_libs.zip "$GITHUB_WORKSPACE/native-out/native_libs.zip"
+
+      - name: Build mozc.data
+        if: steps.cache.outputs.cache-hit != 'true'
+        working-directory: ${{ runner.temp }}/mozc/src
+        run: |
+          bazelisk build --config oss_linux --config release_build //data_manager/oss:mozc_dataset_for_oss
+          data="$(find -L bazel-bin/data_manager/oss -name mozc.data | head -n 1)"
+          test -n "$data"
+          cp -L "$data" "$GITHUB_WORKSPACE/native-out/mozc.data"
+
+      - name: Check native outputs
+        run: |
+          ls -l native-out
+          unzip -l native-out/native_libs.zip
+          test -s native-out/mozc.data
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-out
+          path: native-out
+          retention-days: 7
+
+  apk:
+    needs: native
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: native-out
+          path: native-out
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-36 build-tools;36.0.0'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Install protoc
+        # Must match protobuf-javalite in standalone/app/build.gradle (3.21.12).
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+          protoc --version
+
+      - name: Stage generated sources and resources
+        env:
+          NATIVE_LIBS_ZIP: ${{ github.workspace }}/native-out/native_libs.zip
+          MOZC_DATA: ${{ github.workspace }}/native-out/mozc.data
+        run: standalone/prepare.sh
+
+      - name: Build APK
+        run: gradle -p standalone assembleDebug -PappVersionName="${GITHUB_SHA::7}"
+
+      - name: Rename APK
+        run: |
+          mkdir -p dist
+          cp standalone/app/build/outputs/apk/debug/app-debug.apk "dist/Mozc-standalone-${GITHUB_SHA::7}.apk"
+          ls -l dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Mozc-standalone-apk
+          path: dist/*.apk
+          retention-days: 30
