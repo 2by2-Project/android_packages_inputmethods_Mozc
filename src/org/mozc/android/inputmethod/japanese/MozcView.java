@@ -265,13 +265,49 @@ public class MozcView extends FrameLayout implements MemoryManageable {
     setOnApplyWindowInsetsListener(new OnApplyWindowInsetsListener() {
       @Override
       public WindowInsets onApplyWindowInsets(View view, WindowInsets insets) {
-        int bottom = Math.max(
-            insets.getInsets(WindowInsets.Type.navigationBars()).bottom,
-            insets.getInsets(WindowInsets.Type.captionBar()).bottom);
-        setNavigationBarHeight(bottom);
+        setNavigationBarHeight(getNavigationBarHeight(insets));
         return insets;
       }
     });
+  }
+
+  /**
+   * Returns the height of the navigation bar at the bottom of the IME window, computed in the same
+   * way as the framework sizes the IME navigation bar (NavigationBarController#getSystemInsets),
+   * so that the keyboard ends exactly where the navigation bar begins.
+   */
+  @VisibleForTesting
+  static int getNavigationBarHeight(WindowInsets insets) {
+    int stable = insets.getInsetsIgnoringVisibility(WindowInsets.Type.systemBars()).bottom;
+    int current = insets.getInsets(
+        WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout()).bottom;
+    return Math.min(current, stable);
+  }
+
+  @Override
+  protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+    // Modified by 2by2 Project (2026): read the insets of the window on every measure pass, as
+    // the framework does for its IME navigation bar, instead of relying only on the insets
+    // dispatch. Insets are not dispatched to a view when it is attached (e.g. when the input view
+    // is re-created), so the margin below the keyboard randomly stayed at 0 and the keyboard
+    // covered the navigation bar until the insets changed again.
+    WindowInsets insets = getRootWindowInsets();
+    if (insets != null) {
+      navigationBarHeight = getNavigationBarHeight(insets);
+      View spacer = findViewById(R.id.navigation_bar_spacer);
+      ViewGroup.LayoutParams layoutParams = spacer == null ? null : spacer.getLayoutParams();
+      if (layoutParams != null && layoutParams.height != navigationBarHeight) {
+        // Being measured right now: update the parameter without requesting another layout, and
+        // make sure that the views between the spacer and this view are measured again (measure()
+        // is skipped for views whose measure specs did not change otherwise).
+        layoutParams.height = navigationBarHeight;
+        for (View view = spacer; view != null && view != this; ) {
+          view.forceLayout();
+          view = view.getParent() instanceof View ? (View) view.getParent() : null;
+        }
+      }
+    }
+    super.onMeasure(widthMeasureSpec, heightMeasureSpec);
   }
 
   /** Height of the system navigation bar overlapping the bottom of the IME window. */
@@ -279,12 +315,10 @@ public class MozcView extends FrameLayout implements MemoryManageable {
 
   @VisibleForTesting
   void setNavigationBarHeight(int height) {
-    if (navigationBarHeight == height) {
-      return;
-    }
     navigationBarHeight = height;
     View spacer = findViewById(R.id.navigation_bar_spacer);
-    if (spacer != null) {
+    if (spacer != null && spacer.getLayoutParams() != null
+        && spacer.getLayoutParams().height != height) {
       setLayoutHeight(spacer, height);
     }
   }
