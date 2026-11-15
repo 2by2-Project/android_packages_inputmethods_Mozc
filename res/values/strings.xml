@@ -324,4 +324,6 @@
       <string name="pref_bracket_character_form_entry_full">Full-width</string>
       <string name="pref_bracket_character_form_entry_half">Half-width</string>
       <string name="pref_bracket_character_form_entry_last">Same as the last conversion</string>
+      <string name="pref_bracket_pair_cursor_title">Move the cursor into brackets</string>
+      <string name="pref_bracket_pair_cursor_description">When a pair of brackets such as 「」 or （） is entered, put the cursor between them.</string>
 </resources>

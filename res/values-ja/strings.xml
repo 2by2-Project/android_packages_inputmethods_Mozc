@@ -314,4 +314,6 @@
       <string name="pref_bracket_character_form_entry_full">全角</string>
       <string name="pref_bracket_character_form_entry_half">半角</string>
       <string name="pref_bracket_character_form_entry_last">前回の変換に合わせる</string>
+      <string name="pref_bracket_pair_cursor_title">カッコの中にカーソルを移動</string>
+      <string name="pref_bracket_pair_cursor_description">「」や（）などの対になったカッコを入力したとき、カーソルをカッコの中に移動します。</string>
 </resources>

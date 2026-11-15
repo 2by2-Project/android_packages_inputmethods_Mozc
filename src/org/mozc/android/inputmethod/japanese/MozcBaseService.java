@@ -105,6 +105,7 @@ import android.view.inputmethod.InputConnection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -218,7 +219,7 @@ public class MozcBaseService extends InputMethodService {
       }
       inputConnection.beginBatchEdit();
       try {
-        inputConnection.commitText(text, MozcUtil.CURSOR_POSITION_TAIL);
+        commitTextAtTail(inputConnection, text);
       } finally {
         inputConnection.endBatchEdit();
       }
@@ -355,6 +356,62 @@ public class MozcBaseService extends InputMethodService {
       viewManager.maybeTransitToNarrowMode(command.get(), triggeringKeyEvent.orNull());
       viewManager.render(command.get());
     }
+  }
+
+  // ---- Bracket pairs (added by 2by2 Project, 2026) ------------------------------------------
+
+  /** Opening bracket -> closing bracket. */
+  private static final Map<String, String> BRACKET_PAIRS;
+  static {
+    String[] pairs = {
+        "()", "\uFF08\uFF09", "[]", "\uFF3B\uFF3D", "{}", "\uFF5B\uFF5D",
+        "\u300C\u300D", "\u300E\u300F", "\u3010\u3011", "\u3014\u3015", "\u3008\u3009",
+        "\u300A\u300B", "\u3018\u3019", "\u301A\u301B", "\uFF62\uFF63", "\u201C\u201D",
+        "\u2018\u2019", "\u00AB\u00BB", "\u2039\u203A",
+    };
+    Map<String, String> map = new HashMap<String, String>();
+    for (String pair : pairs) {
+      map.put(pair.substring(0, 1), pair.substring(1, 2));
+    }
+    BRACKET_PAIRS = Collections.unmodifiableMap(map);
+  }
+
+  /**
+   * Returns the offset of the closing bracket if {@code text} is a pair of brackets such as
+   * "\uFF08\uFF09" or "\u300C\u300D" (a candidate of "kakko" or a symbol), or -1 otherwise.
+   */
+  @VisibleForTesting
+  static int getBracketPairClosingOffset(String text) {
+    if (text.codePointCount(0, text.length()) != 2) {
+      return -1;
+    }
+    int offset = text.offsetByCodePoints(0, 1);
+    String closing = BRACKET_PAIRS.get(text.substring(0, offset));
+    return closing != null && closing.equals(text.substring(offset)) ? offset : -1;
+  }
+
+  /**
+   * Commits {@code text} with the cursor at its tail, or, if it is a pair of brackets, with the
+   * cursor between the brackets like Gboard does (when enabled in the preferences).
+   *
+   * @return the part of {@code text} before the cursor
+   */
+  private String commitTextAtTail(InputConnection inputConnection, String text) {
+    int offset = (propagatedClientSidePreference == null
+            || propagatedClientSidePreference.isBracketPairCursorEnabled())
+        ? getBracketPairClosingOffset(text) : -1;
+    if (offset < 0) {
+      if (!inputConnection.commitText(text, MozcUtil.CURSOR_POSITION_TAIL)) {
+        MozcLog.e("Failed to commit text.");
+      }
+      return text;
+    }
+    String opening = text.substring(0, offset);
+    if (!inputConnection.commitText(opening, MozcUtil.CURSOR_POSITION_TAIL)
+        || !inputConnection.commitText(text.substring(offset), MozcUtil.CURSOR_POSITION_HEAD)) {
+      MozcLog.e("Failed to commit text.");
+    }
+    return opening;
   }
 
   /**
@@ -1234,12 +1291,12 @@ public class MozcBaseService extends InputMethodService {
     inputConnection.beginBatchEdit();
     try {
       maybeDeleteSurroundingText(output, inputConnection);
-      maybeCommitText(output, inputConnection);
+      String committedText = maybeCommitText(output, inputConnection);
       setComposingText(command, inputConnection);
       maybeSetSelection(output, inputConnection);
       selectionTracker.onRender(
           output.hasDeletionRange() ? output.getDeletionRange() : null,
-          output.hasResult() ? output.getResult().getValue() : null,
+          committedText,
           output.hasPreedit() ? output.getPreedit() : null);
     } finally {
       inputConnection.endBatchEdit();
@@ -1369,15 +1426,22 @@ public class MozcBaseService extends InputMethodService {
     }
   }
 
-  private static void maybeCommitText(Output output, InputConnection inputConnection) {
+  /**
+   * Commits the result in {@code output}, if any.
+   *
+   * @return the committed text before the cursor (see {@link #commitTextAtTail}), or {@code null}
+   *     if nothing is committed
+   */
+  @Nullable
+  private String maybeCommitText(Output output, InputConnection inputConnection) {
     if (!output.hasResult()) {
-      return;
+      return null;
     }
 
     String outputText = output.getResult().getValue();
     if (outputText.equals("")) {
       // Do nothing for an empty result string.
-      return;
+      return outputText;
     }
 
     int position = MozcUtil.CURSOR_POSITION_TAIL;
@@ -1390,9 +1454,14 @@ public class MozcBaseService extends InputMethodService {
       }
     }
 
+    if (position == MozcUtil.CURSOR_POSITION_TAIL) {
+      // Modified by 2by2 Project (2026): put the cursor between a pair of brackets.
+      return commitTextAtTail(inputConnection, outputText);
+    }
     if (!inputConnection.commitText(outputText, position)) {
       MozcLog.e("Failed to commit text.");
     }
+    return outputText;
   }
 
   private void setComposingText(Command command, InputConnection inputConnection) {

@@ -112,5 +112,11 @@
         android:key="pref_bracket_character_form_key"
         android:summary="@string/pref_bracket_character_form_description"
         android:title="@string/pref_bracket_character_form_title" />
+
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="pref_bracket_pair_cursor_key"
+        android:summary="@string/pref_bracket_pair_cursor_description"
+        android:title="@string/pref_bracket_pair_cursor_title" />
   </PreferenceCategory>
 </PreferenceScreen>

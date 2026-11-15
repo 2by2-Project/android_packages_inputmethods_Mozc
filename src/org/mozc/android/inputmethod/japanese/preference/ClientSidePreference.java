@@ -110,6 +110,9 @@ public class ClientSidePreference {
   /** Percentage of keyboard height */
   private final int keyboardHeightRatio;
 
+  /** Whether the cursor is put between a pair of brackets (added by 2by2 Project). */
+  private final boolean bracketPairCursor;
+
   /**
    * If you want to use this method,
    * consider using {@link #ClientSidePreference(SharedPreferences, Resources, int)} instead.
@@ -137,6 +140,7 @@ public class ClientSidePreference {
     this.isMicrophoneButtonEnabled = isMicrophoneButtonEnabled;
     this.layoutAdjustment = Preconditions.checkNotNull(layoutAdjustment);
     this.keyboardHeightRatio = keyboardHeightRatio;
+    this.bracketPairCursor = true;
   }
 
   public ClientSidePreference(
@@ -213,6 +217,8 @@ public class ClientSidePreference {
     layoutAdjustment = PreferenceUtil.getEnum(
         sharedPreferences, layoutAdjustmentKey, LayoutAdjustment.class, LayoutAdjustment.FILL);
     keyboardHeightRatio = sharedPreferences.getInt(keyboardHeightRatioKey, 100);
+    bracketPairCursor =
+        sharedPreferences.getBoolean(PreferenceUtil.PREF_BRACKET_PAIR_CURSOR_KEY, true);
   }
 
   public boolean isHapticFeedbackEnabled() {
@@ -277,5 +283,9 @@ public class ClientSidePreference {
 
   public int getKeyboardHeightRatio() {
     return keyboardHeightRatio;
+  }
+
+  public boolean isBracketPairCursorEnabled() {
+    return bracketPairCursor;
   }
 }

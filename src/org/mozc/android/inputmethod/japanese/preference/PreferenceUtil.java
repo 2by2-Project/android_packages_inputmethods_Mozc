@@ -142,6 +142,8 @@ public class PreferenceUtil {
   // Added by 2by2 Project (2026).
   /** Character form (full-width/half-width) of brackets in the Japanese input mode. */
   public static final String PREF_BRACKET_CHARACTER_FORM_KEY = "pref_bracket_character_form_key";
+  /** Whether the cursor is put between a pair of brackets (e.g. a "kakko" candidate). */
+  public static final String PREF_BRACKET_PAIR_CURSOR_KEY = "pref_bracket_pair_cursor_key";
 
   public static final String PREF_SOFTWARE_KEYBOARD_ADVANED_LANDSCAPE_KEY =
       "pref_software_keyboard_advanced_landscape_key";
