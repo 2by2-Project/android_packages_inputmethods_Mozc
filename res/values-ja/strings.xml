@@ -307,4 +307,11 @@
       <!-- Yes/No -->
       <string name="yes">はい</string>
       <string name="no">いいえ</string>
+
+      <!-- Added by 2by2 Project (2026). -->
+      <string name="pref_bracket_character_form_title">日本語入力時のカッコ</string>
+      <string name="pref_bracket_character_form_description">日本語入力で入力する ( ) [ ] { } の幅を選びます。</string>
+      <string name="pref_bracket_character_form_entry_full">全角</string>
+      <string name="pref_bracket_character_form_entry_half">半角</string>
+      <string name="pref_bracket_character_form_entry_last">前回の変換に合わせる</string>
 </resources>

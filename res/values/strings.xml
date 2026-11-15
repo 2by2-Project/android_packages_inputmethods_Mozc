@@ -317,4 +317,11 @@
       <!-- Unfortunately android.R.string.yes/no correspond to OK/Cancel. -->
       <string name="yes">Yes</string>
       <string name="no">No</string>
+
+      <!-- Added by 2by2 Project (2026). -->
+      <string name="pref_bracket_character_form_title">Brackets in Japanese input</string>
+      <string name="pref_bracket_character_form_description">Width of ( ) [ ] { } typed in the Japanese input mode.</string>
+      <string name="pref_bracket_character_form_entry_full">Full-width</string>
+      <string name="pref_bracket_character_form_entry_half">Half-width</string>
+      <string name="pref_bracket_character_form_entry_last">Same as the last conversion</string>
 </resources>

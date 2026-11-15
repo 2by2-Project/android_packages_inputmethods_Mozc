@@ -468,7 +468,7 @@
         </Flick>
         <Flick mozc:direction="left">
           <KeyEntity mozc:sourceId="64"
-                     mozc:keyCode="@integer/uchar_latin_small_letter_t"
+                     mozc:keyCode="@integer/uchar_left_parenthesis"
                      mozc:keyIcon="@raw/twelvekeys__kana__support__08_left"
                      mozc:flickHighlight="true">
             <PopUp mozc:popUpIcon="@raw/twelvekeys__popup__left_parenthesis" />
@@ -484,7 +484,7 @@
         </Flick>
         <Flick mozc:direction="right">
           <KeyEntity mozc:sourceId="65"
-                     mozc:keyCode="@integer/uchar_latin_small_letter_v"
+                     mozc:keyCode="@integer/uchar_right_parenthesis"
                      mozc:keyIcon="@raw/twelvekeys__kana__support__08_right"
                      mozc:flickHighlight="true">
             <PopUp mozc:popUpIcon="@raw/twelvekeys__popup__right_parenthesis" />

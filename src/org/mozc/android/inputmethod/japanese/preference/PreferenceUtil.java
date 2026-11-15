@@ -139,6 +139,10 @@ public class PreferenceUtil {
   public static final String PREF_PORTRAIT_KEYBOARD_HEIGHT_RATIO_KEY =
       "pref_portrait_keyboard_height_ratio_key";
 
+  // Added by 2by2 Project (2026).
+  /** Character form (full-width/half-width) of brackets in the Japanese input mode. */
+  public static final String PREF_BRACKET_CHARACTER_FORM_KEY = "pref_bracket_character_form_key";
+
   public static final String PREF_SOFTWARE_KEYBOARD_ADVANED_LANDSCAPE_KEY =
       "pref_software_keyboard_advanced_landscape_key";
   public static final String PREF_LANDSCAPE_KEYBOARD_LAYOUT_KEY =

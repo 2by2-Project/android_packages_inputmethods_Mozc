@@ -31,6 +31,19 @@
 -->
 
 <resources>
+  <!-- Added by 2by2 Project (2026). -->
+  <string-array name="pref_bracket_character_form_entries">
+    <item>@string/pref_bracket_character_form_entry_full</item>
+    <item>@string/pref_bracket_character_form_entry_half</item>
+    <item>@string/pref_bracket_character_form_entry_last</item>
+  </string-array>
+
+  <string-array name="pref_bracket_character_form_values" translatable="false">
+    <item>FULL_WIDTH</item>
+    <item>HALF_WIDTH</item>
+    <item>LAST_FORM</item>
+  </string-array>
+
   <!-- resources used in a preference view. -->
   <string-array name="input_style_setting_entries">
     <item>@string/pref_input_style_setting_entry_toggle</item>
