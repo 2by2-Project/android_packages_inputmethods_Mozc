@@ -307,4 +307,18 @@
       <!-- Yes/No -->
       <string name="yes">はい</string>
       <string name="no">いいえ</string>
+
+      <!-- Added by 2by2 Project (2026). -->
+      <string name="pref_candidate_rows_title">変換候補の行数</string>
+      <string name="pref_candidate_rows_description">キーボードの上に表示する変換候補の行数です。画面サイズによって上限があります。</string>
+      <string name="pref_candidate_rows_entry_1">1行</string>
+      <string name="pref_candidate_rows_entry_2">2行</string>
+      <string name="pref_candidate_rows_entry_3">3行</string>
+      <string name="pref_bracket_character_form_title">日本語入力時のカッコ</string>
+      <string name="pref_bracket_character_form_description">日本語入力で入力する ( ) [ ] { } の幅を選びます。</string>
+      <string name="pref_bracket_character_form_entry_full">全角</string>
+      <string name="pref_bracket_character_form_entry_half">半角</string>
+      <string name="pref_bracket_character_form_entry_last">前回の変換に合わせる</string>
+      <string name="pref_bracket_auto_pair_title">カッコを自動で閉じる</string>
+      <string name="pref_bracket_auto_pair_description">「 などの開きカッコを入力すると閉じカッコも入力し、カーソルをカッコの中に移動します。</string>
 </resources>

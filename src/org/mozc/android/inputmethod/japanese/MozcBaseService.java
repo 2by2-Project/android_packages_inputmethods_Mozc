@@ -107,6 +107,7 @@ import android.view.inputmethod.InputConnection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -417,7 +418,98 @@ public class MozcBaseService extends InputMethodService {
       // Transit to narrow mode if required (e.g., Typed 'a' key from h/w keyboard).
       viewManager.maybeTransitToNarrowMode(command.get(), triggeringKeyEvent.orNull());
       viewManager.render(command.get());
+      maybeAutoPairBracket(command.get());
     }
+  }
+
+  // ---- Bracket auto-pairing (added by 2by2 Project, 2026) ----------------------------------
+
+  /** Opening bracket -> closing bracket. */
+  private static final Map<String, String> BRACKET_PAIRS;
+  static {
+    String[] pairs = {
+        "()", "\uFF08\uFF09", "[]", "\uFF3B\uFF3D", "{}", "\uFF5B\uFF5D",
+        "\u300C\u300D", "\u300E\u300F", "\u3010\u3011", "\u3014\u3015", "\u3008\u3009",
+        "\u300A\u300B", "\uFF62\uFF63", "\u201C\u201D", "\u2018\u2019",
+    };
+    Map<String, String> map = new HashMap<String, String>();
+    for (String pair : pairs) {
+      map.put(pair.substring(0, 1), pair.substring(1, 2));
+    }
+    BRACKET_PAIRS = Collections.unmodifiableMap(map);
+  }
+
+  /** The composing text and its cursor (in characters) of the last rendered output. */
+  private String lastPreeditText = "";
+  private int lastPreeditCursor = 0;
+
+  /**
+   * When a key just inserted an opening bracket into the composing text, inserts the closing one
+   * and moves the cursor back between them, like Gboard does.
+   * <p>
+   * The keyboards send keys which the engine converts to characters (e.g. by flick tables), so
+   * the bracket is detected in the engine's output: the composing text must have grown by exactly
+   * the bracket at the cursor (a toggle replacing a character does not count).
+   */
+  private void maybeAutoPairBracket(Command command) {
+    Output output = command.getOutput();
+    String text = "";
+    int cursor = 0;
+    if (output.hasPreedit()) {
+      StringBuilder builder = new StringBuilder();
+      for (Segment segment : output.getPreedit().getSegmentList()) {
+        builder.append(segment.getValue());
+      }
+      text = builder.toString();
+      cursor = output.getPreedit().getCursor();
+    }
+    String previousText = lastPreeditText;
+    int previousCursor = lastPreeditCursor;
+    lastPreeditText = text;
+    lastPreeditCursor = cursor;
+
+    if (propagatedClientSidePreference == null
+        || !propagatedClientSidePreference.isBracketAutoPairEnabled()) {
+      return;
+    }
+    Input input = command.getInput();
+    if (input.getType() != Input.CommandType.SEND_KEY || !input.hasKey()
+        || input.getKey().hasSpecialKey() || !output.getConsumed()) {
+      return;
+    }
+    if (output.hasAllCandidateWords() && output.getAllCandidateWords().hasCategory()
+        && output.getAllCandidateWords().getCategory()
+            == ProtoCandidateWindow.Category.CONVERSION) {
+      return;
+    }
+    int length = text.codePointCount(0, text.length());
+    if (cursor < 1 || cursor > length || cursor != previousCursor + 1
+        || length != previousText.codePointCount(0, previousText.length()) + 1) {
+      return;
+    }
+    int openingOffset = text.offsetByCodePoints(0, cursor - 1);
+    int cursorOffset = text.offsetByCodePoints(0, cursor);
+    String closing = BRACKET_PAIRS.get(text.substring(openingOffset, cursorOffset));
+    if (closing == null) {
+      return;
+    }
+    if (!(text.substring(0, openingOffset) + text.substring(cursorOffset)).equals(previousText)
+        || text.startsWith(closing, cursorOffset)) {
+      // Not a plain insertion, or already closed.
+      return;
+    }
+    sessionExecutor.sendSyntheticKey(
+        // Insert exactly the counterpart of the typed bracket (same width), untransliterated.
+        ProtoCommands.KeyEvent.newBuilder()
+            .setKeyString(closing)
+            .setInputStyle(ProtoCommands.KeyEvent.InputStyle.AS_IS)
+            .build(),
+        renderResultCallback);
+    sessionExecutor.sendSyntheticKey(
+        ProtoCommands.KeyEvent.newBuilder()
+            .setSpecialKey(ProtoCommands.KeyEvent.SpecialKey.LEFT)
+            .build(),
+        renderResultCallback);
   }
 
   /**
@@ -803,6 +895,8 @@ public class MozcBaseService extends InputMethodService {
   }
 
   private void resetContext() {
+    lastPreeditText = "";
+    lastPreeditCursor = 0;
     if (sessionExecutor != null) {
       sessionExecutor.resetContext();
     }
@@ -1671,6 +1765,10 @@ public class MozcBaseService extends InputMethodService {
     if (oldPreference == null
         || oldPreference.getKeyboardHeightRatio() != newPreference.getKeyboardHeightRatio()) {
       viewManager.setKeyboardHeightRatio(newPreference.getKeyboardHeightRatio());
+    }
+    if (oldPreference == null
+        || oldPreference.getCandidateRows() != newPreference.getCandidateRows()) {
+      viewManager.setCandidateRows(newPreference.getCandidateRows());
     }
 
     propagatedClientSidePreference  = newPreference;

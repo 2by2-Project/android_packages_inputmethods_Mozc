@@ -182,6 +182,9 @@ public interface ViewManagerInterface extends MemoryManageable {
 
   public void setKeyboardHeightRatio(int keyboardHeightRatio);
 
+  /** Sets the number of the candidate rows above the keyboard (added by 2by2 Project). */
+  public void setCandidateRows(int candidateRows);
+
   public void onConfigurationChanged(Configuration newConfig);
 
   public void onStartInputView(EditorInfo editorInfo);

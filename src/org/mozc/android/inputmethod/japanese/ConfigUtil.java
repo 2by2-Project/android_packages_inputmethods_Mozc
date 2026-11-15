@@ -31,6 +31,7 @@ package org.mozc.android.inputmethod.japanese;
 
 import org.mozc.android.inputmethod.japanese.preference.PreferenceUtil;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoConfig.Config;
+import org.mozc.android.inputmethod.japanese.protobuf.ProtoConfig.Config.CharacterForm;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoConfig.Config.FundamentalCharacterForm;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoConfig.Config.HistoryLearningLevel;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoConfig.GeneralConfig;
@@ -101,6 +102,9 @@ public class ConfigUtil {
           .setIncognitoMode(incognitoMode.booleanValue());
     }
 
+    builder = maybeCreateConfigBuilder(builder);
+    addCharacterFormRules(builder, getBracketCharacterForm(sharedPreferences));
+
     GeneralConfig generalConfig = toGeneralConfig(sharedPreferences);
     if (generalConfig != GeneralConfig.getDefaultInstance()) {
       builder = maybeCreateConfigBuilder(builder)
@@ -121,6 +125,59 @@ public class ConfigUtil {
    * Now this method only supports:
    * - upload_usage_stats.
    */
+  // Added by 2by2 Project (2026).
+  /** Group of the brackets in the character form rules. */
+  private static final String BRACKET_GROUP = "(){}[]";
+
+  /**
+   * Adds the engine's default character form rules (config_handler.cc), with the given form for
+   * the brackets. The engine applies its defaults only when the config has no rule at all, so the
+   * whole set is needed to change one group.
+   */
+  private static void addCharacterFormRules(Config.Builder builder, CharacterForm bracketForm) {
+    CharacterForm full = CharacterForm.FULL_WIDTH;
+    CharacterForm last = CharacterForm.LAST_FORM;
+    CharacterForm bracketPreedit =
+        bracketForm == CharacterForm.HALF_WIDTH ? CharacterForm.HALF_WIDTH : full;
+    addCharacterFormRule(builder, "ア", full, full);
+    addCharacterFormRule(builder, "A", full, last);
+    addCharacterFormRule(builder, "0", full, last);
+    addCharacterFormRule(builder, BRACKET_GROUP, bracketPreedit, bracketForm);
+    addCharacterFormRule(builder, ".,", full, last);
+    addCharacterFormRule(builder, "。、", full, full);
+    addCharacterFormRule(builder, "・「」", full, full);
+    addCharacterFormRule(builder, "\"'", full, last);
+    addCharacterFormRule(builder, ":;", full, last);
+    addCharacterFormRule(builder, "#%&@$^_|`\\", full, last);
+    addCharacterFormRule(builder, "~", full, last);
+    addCharacterFormRule(builder, "<>=+-/*", full, last);
+    addCharacterFormRule(builder, "?!", full, last);
+  }
+
+  private static void addCharacterFormRule(
+      Config.Builder builder, String group, CharacterForm preedit, CharacterForm conversion) {
+    builder.addCharacterFormRules(Config.CharacterFormRule.newBuilder()
+        .setGroup(group)
+        .setPreeditCharacterForm(preedit)
+        .setConversionCharacterForm(conversion));
+  }
+
+  /**
+   * Returns the form of brackets: full-width by default (as Gboard), half-width, or the engine's
+   * default (full-width while composing, the last used form once converted).
+   */
+  private static CharacterForm getBracketCharacterForm(SharedPreferences sharedPreferences) {
+    String value = sharedPreferences.getString(
+        PreferenceUtil.PREF_BRACKET_CHARACTER_FORM_KEY, CharacterForm.FULL_WIDTH.name());
+    if (CharacterForm.HALF_WIDTH.name().equals(value)) {
+      return CharacterForm.HALF_WIDTH;
+    }
+    if (CharacterForm.LAST_FORM.name().equals(value)) {
+      return CharacterForm.LAST_FORM;
+    }
+    return CharacterForm.FULL_WIDTH;
+  }
+
   static GeneralConfig toGeneralConfig(SharedPreferences sharedPreferences) {
     GeneralConfig.Builder builder = null;
 
