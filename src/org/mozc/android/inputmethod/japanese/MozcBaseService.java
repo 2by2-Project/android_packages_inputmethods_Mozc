@@ -100,7 +100,6 @@ import android.view.Window;
 import android.view.WindowInsetsController;
 import android.view.inputmethod.CursorAnchorInfo;
 import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputBinding;
 import android.view.inputmethod.InputConnection;
 
 import java.util.ArrayList;
@@ -120,32 +119,12 @@ import javax.annotation.Nullable;
 // TODO(hsumita): Unify this class and MozcService if we stop supporting API level 20.
 public class MozcBaseService extends InputMethodService {
 
-  /**
-   * InputMethod implementation for MozcService.
-   * This injects the composing text tracking feature by wrapping InputConnection.
-   */
-  public class MozcInputMethod extends InputMethodService.InputMethodImpl {
-    @Override
-    public void bindInput(InputBinding binding) {
-      binding = new InputBinding(
-          ComposingTextTrackingInputConnection.newInstance(binding.getConnection()),
-          binding.getConnectionToken(),
-          binding.getUid(),
-          binding.getPid());
-      super.bindInput(binding);
-    }
+  /** The composing text last set to the application (added by 2by2 Project). */
+  private String composingText = "";
 
-    @Override
-    public void startInput(InputConnection inputConnection, EditorInfo attribute) {
-      super.startInput(
-          ComposingTextTrackingInputConnection.newInstance(inputConnection), attribute);
-    }
-
-    @Override
-    public void restartInput(InputConnection inputConnection, EditorInfo attribute) {
-      super.restartInput(
-          ComposingTextTrackingInputConnection.newInstance(inputConnection), attribute);
-    }
+  /** Returns the composing text this IME set to the current editor, or an empty string. */
+  public String getComposingText() {
+    return composingText;
   }
 
   private static class RealFeedbackListener implements FeedbackListener {
@@ -599,11 +578,6 @@ public class MozcBaseService extends InputMethodService {
   }
 
   @Override
-  public MozcInputMethod onCreateInputMethodInterface() {
-    return new MozcInputMethod();
-  }
-
-  @Override
   public void onCreate() {
     // Note: super.onCreate() is invoked in onCreateInternal. So, do not call it, here.
     MozcLog.d("start MozcService#onCreate " + System.nanoTime());
@@ -757,6 +731,7 @@ public class MozcBaseService extends InputMethodService {
   }
 
   private void resetContext() {
+    composingText = "";
     if (sessionExecutor != null) {
       sessionExecutor.resetContext();
     }
@@ -1438,6 +1413,7 @@ public class MozcBaseService extends InputMethodService {
       Input input = command.getInput();
       if (input.getType() != Input.CommandType.SEND_COMMAND
           || input.getCommand().getType() != SessionCommand.CommandType.SWITCH_COMPOSITION_MODE) {
+        composingText = "";
         if (!inputConnection.setComposingText("", 0)) {
           MozcLog.e("Failed to set composing text.");
         }
@@ -1488,6 +1464,7 @@ public class MozcBaseService extends InputMethodService {
     // System cursor will be moved to the tail of preedit.
     // It triggers onUpdateSelection again.
     int cursorPosition = cursor > 0 ? MozcUtil.CURSOR_POSITION_TAIL : 0;
+    composingText = builder.toString();
     if (!inputConnection.setComposingText(builder, cursorPosition)) {
       MozcLog.e("Failed to set composing text.");
     }
@@ -1665,6 +1642,7 @@ public class MozcBaseService extends InputMethodService {
     InputConnection inputConnection = getCurrentInputConnection();
     if (inputConnection != null) {
       if (inputBound) {
+        composingText = "";
         inputConnection.finishComposingText();
       }
       int selectionStart = selectionTracker.getLastSelectionStart();
@@ -1745,6 +1723,7 @@ public class MozcBaseService extends InputMethodService {
         if (isInputViewShown() && inputBound) {
           InputConnection inputConnection = getCurrentInputConnection();
           if (inputConnection != null) {
+            composingText = "";
             inputConnection.finishComposingText();
           }
         }

@@ -92,9 +92,10 @@ class MozcMenuDialogListenerImpl implements MenuDialogListener {
     InputConnection inputConnection = inputMethodService.getCurrentInputConnection();
     String composingText = "";
     if (inputConnection != null) {
-      if (inputConnection instanceof ComposingTextTrackingInputConnection) {
-        composingText =
-            ComposingTextTrackingInputConnection.class.cast(inputConnection).getComposingText();
+      // Modified by 2by2 Project (2026): the service keeps the composing text, as the
+      // InputConnection is no longer wrapped.
+      if (inputMethodService instanceof MozcBaseService) {
+        composingText = MozcBaseService.class.cast(inputMethodService).getComposingText();
       }
       inputConnection.setComposingText("", MozcUtil.CURSOR_POSITION_TAIL);
     }
