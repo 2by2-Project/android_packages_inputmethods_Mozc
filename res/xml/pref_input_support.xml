@@ -105,6 +105,12 @@
         android:title="@string/pref_voice_input_title" />
 
     <!-- Added by 2by2 Project (2026). -->
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="pref_status_icon_key"
+        android:summary="@string/pref_status_icon_description"
+        android:title="@string/pref_status_icon_title" />
+
     <ListPreference
         android:defaultValue="1"
         android:entries="@array/pref_candidate_rows_entries"

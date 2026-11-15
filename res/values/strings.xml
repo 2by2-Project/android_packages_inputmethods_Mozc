@@ -319,6 +319,8 @@
       <string name="no">No</string>
 
       <!-- Added by 2by2 Project (2026). -->
+      <string name="pref_status_icon_title">Show the input mode in the status bar</string>
+      <string name="pref_status_icon_description">While the keyboard is shown, show the input mode such as あ or A in the status bar.</string>
       <string name="pref_candidate_rows_title">Candidate rows</string>
       <string name="pref_candidate_rows_description">Number of rows of the suggestions above the keyboard. Limited by the screen size.</string>
       <string name="pref_candidate_rows_entry_1">1 row</string>

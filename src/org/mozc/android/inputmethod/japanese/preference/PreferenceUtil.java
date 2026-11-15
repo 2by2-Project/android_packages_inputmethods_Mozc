@@ -140,6 +140,8 @@ public class PreferenceUtil {
       "pref_portrait_keyboard_height_ratio_key";
 
   // Added by 2by2 Project (2026).
+  /** Whether the input mode icon is shown in the status bar. */
+  public static final String PREF_STATUS_ICON_KEY = "pref_status_icon_key";
   /** Number of the rows of the suggestion/conversion candidates above the keyboard. */
   public static final String PREF_CANDIDATE_ROWS_KEY = "pref_candidate_rows_key";
   /** Character form (full-width/half-width) of brackets in the Japanese input mode. */

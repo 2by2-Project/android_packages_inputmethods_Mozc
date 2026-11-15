@@ -1191,6 +1191,12 @@ public class MozcBaseService extends InputMethodService {
    * Shows the status icon basing on the current keyboard spec.
    */
   private void showStatusIcon() {
+    // Modified by 2by2 Project (2026): optional, off by default like Gboard.
+    if (propagatedClientSidePreference == null
+        || !propagatedClientSidePreference.isStatusIconEnabled()) {
+      hideStatusIcon();
+      return;
+    }
     switch (currentKeyboardSpecification.getCompositionMode()) {
       case HIRAGANA:
         showStatusIcon(R.drawable.status_icon_hiragana);
@@ -1667,6 +1673,10 @@ public class MozcBaseService extends InputMethodService {
     }
 
     propagatedClientSidePreference  = newPreference;
+    if (oldPreference != null
+        && oldPreference.isStatusIconEnabled() != newPreference.isStatusIconEnabled()) {
+      updateStatusIcon();
+    }
   }
 
   /**

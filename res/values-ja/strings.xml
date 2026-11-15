@@ -309,6 +309,8 @@
       <string name="no">いいえ</string>
 
       <!-- Added by 2by2 Project (2026). -->
+      <string name="pref_status_icon_title">ステータスバーに入力モードを表示</string>
+      <string name="pref_status_icon_description">キーボードの表示中、ステータスバーに「あ」「A」などの入力モードを表示します。</string>
       <string name="pref_candidate_rows_title">変換候補の行数</string>
       <string name="pref_candidate_rows_description">キーボードの上に表示する変換候補の行数です。画面サイズによって上限があります。</string>
       <string name="pref_candidate_rows_entry_1">1行</string>

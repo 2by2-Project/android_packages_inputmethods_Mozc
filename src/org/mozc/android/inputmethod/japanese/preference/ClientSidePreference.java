@@ -116,6 +116,9 @@ public class ClientSidePreference {
   /** Whether the cursor is put between a pair of brackets (added by 2by2 Project). */
   private final boolean bracketPairCursor;
 
+  /** Whether the input mode icon is shown in the status bar (added by 2by2 Project). */
+  private final boolean statusIconEnabled;
+
   /**
    * If you want to use this method,
    * consider using {@link #ClientSidePreference(SharedPreferences, Resources, int)} instead.
@@ -145,6 +148,7 @@ public class ClientSidePreference {
     this.keyboardHeightRatio = keyboardHeightRatio;
     this.candidateRows = DEFAULT_CANDIDATE_ROWS;
     this.bracketPairCursor = true;
+    this.statusIconEnabled = false;
   }
 
   /** Default number of candidate rows: one, like Gboard. */
@@ -227,6 +231,9 @@ public class ClientSidePreference {
     candidateRows = getCandidateRows(sharedPreferences);
     bracketPairCursor =
         sharedPreferences.getBoolean(PreferenceUtil.PREF_BRACKET_PAIR_CURSOR_KEY, true);
+    // Off by default, like Gboard.
+    statusIconEnabled =
+        sharedPreferences.getBoolean(PreferenceUtil.PREF_STATUS_ICON_KEY, false);
   }
 
   private static int getCandidateRows(SharedPreferences sharedPreferences) {
@@ -309,5 +316,9 @@ public class ClientSidePreference {
 
   public boolean isBracketPairCursorEnabled() {
     return bracketPairCursor;
+  }
+
+  public boolean isStatusIconEnabled() {
+    return statusIconEnabled;
   }
 }
